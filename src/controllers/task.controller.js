@@ -1,8 +1,50 @@
 const db = require("../config/db");
 
+const createCategory =async(req, res) => {
+    try{
+        const { name } = req.body;
+        const user_id = req.user.id;
+
+        const [result] = await db.execute(
+            "INSERT INTO categories (name , user_id) VALUES (?,?)",[name , user_id]
+        );
+        return res.status(201).json({message: " Category created successfully", category_id: result.insertId});
+    }
+    catch(err){
+        console.error(err);
+        return res.status(500).json({message: "Server error"});
+    }
+}
+
+const createTaskInsideCatefory =async(req, res) => {
+    try{
+        const { title , description, status} =req.body;
+        const user_id = req.user.id;
+        const categoryId = req.params;
+
+        const [category] = await db.execute(
+            "SELECT id FROM categories WHERE id = ? AND user_id = ? ",[categoryId,user_id]
+        );
+        if(category.length() === 0)
+        return res.status(404).json({message:"category not found"});
+
+        const [result] = await db.execute(
+            "INSERT INTO tasks (user_id, title, description, status,categoryId) VALUES (?,?,?,?,?)",
+            [user_id, title, description, status || "TODO", categoryId]
+        );
+        return res.status(201).json({ message:"Task created successfully", task_id: result.insertId});
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
 // Create a new task
 const createTask = async (req, res) => {
     try {
+        console.log("I am here");
         const { title, description, status } = req.body;
         const user_id = req.user.id; // from auth middleware
 
@@ -26,12 +68,28 @@ const createTask = async (req, res) => {
 // Get all tasks for logged-in user
 const getAllTasks = async (req, res) => {
     try {
+        console.log("I am inside getAllTask");
         const user_id = req.user.id;
+        const{startingDate,endingDate,status} = req.query;
 
-        const [tasks] = await db.execute(
-            "SELECT * FROM tasks WHERE user_id = ?",
-            [user_id]
-        );
+        let query = "SELECT * FROM tasks WHERE user_id =? ";
+        let values = [user_id];
+
+        if(startingDate && endingDate){
+            query += "AND created_at BETWEEN ? AND ? ";
+            values.push(startingDate , endingDate);
+        }
+
+        if(status){
+            query += "AND status = ? ";
+            values.push(status);
+        }
+
+        const [tasks] = await db.execute(query,values);
+
+        if(tasks.length === 0){
+            return res.status(404).json({message:"Task not found"})
+        }
 
         return res.status(200).json({ tasks });
     } catch (err) {
@@ -119,4 +177,39 @@ const deleteTask = async (req, res) => {
     }
 };
 
-module.exports = { createTask, getAllTasks, getTaskById, updateTask, deleteTask };
+module.exports = { createCategory, createTask, getAllTasks, getTaskById, updateTask, deleteTask };
+
+// get tasks according to dates
+// const getTask = async (req,res) => {
+//     console.log("I am here");
+//     console.log("Query params:", req.query);
+
+//     try{
+//         const user_id = req.user.id;
+//         const {startingDate , endingDate , status} = req.query;
+//         let query = "SELECT * FROM tasks WHERE user_id=? ";
+//         let values = [user_id];
+
+//         if(startingDate && endingDate){
+//             query+= "AND created_at BETWEEN ? AND ? ";
+//             values.push(startingDate,endingDate);
+//         }
+
+//         if(status){
+//             query+= "AND status=? ";
+//             values.push(status);
+//         }
+
+//         const [tasks] = await db.execute(query , values);
+        
+//         if(tasks.length === 0){
+//             return res.status(404).json({ message: "Task not found"});
+//         }
+//         return res.status(200).json({ tasks });
+//     }
+//     catch(err){
+//         console.error(err);
+//         res.status(500).json({message: "Server error"});
+//     }
+// };
+// module.exports = { createTask, getAllTasks, getTaskById, updateTask, deleteTask, getTask };

@@ -10,8 +10,9 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/auth", authRoutes);
+// app.use("api/v1/categories", taskRoutes);
 app.use("/api/v1/tasks", taskRoutes);
 
-app.listen(3000, () => {
+app.listen(3000, "0.0.0.0", () => {
     console.log("Server running on port 3000");
 });

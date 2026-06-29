@@ -4,7 +4,15 @@ const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
   password: 'avantika',
-  database: 'task_manager'
+  database: 'todo_db'
+});
+pool.getConnection((err, connection) => {
+  if (err) {
+    console.error("❌ MySQL connection failed:", err.message);
+  } else {
+    console.log("✅ MySQL connected successfully");
+    connection.release();
+  }
 });
 
 module.exports = pool.promise();

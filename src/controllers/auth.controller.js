@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 
 const signup = async (req, res) => {
     try {
+        console.log("I am avantika");
         const { name, age, phone, email, username, password, confirm_password } = req.body;
 
         // 1. Validate fields
@@ -51,6 +52,7 @@ module.exports = { signup };
 
 const login = async (req, res) => {
     try {
+        console.log("I am here");
         const { username, password } = req.body;
 
         if (!username || !password) {
