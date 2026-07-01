@@ -16,20 +16,20 @@ const createCategory =async(req, res) => {
     }
 }
 
-const createTaskInsideCatefory =async(req, res) => {
+const createTaskInsideCategory =async(req, res) => {
     try{
         const { title , description, status} =req.body;
         const user_id = req.user.id;
-        const categoryId = req.params;
+        const {categoryId} = req.params;
 
         const [category] = await db.execute(
             "SELECT id FROM categories WHERE id = ? AND user_id = ? ",[categoryId,user_id]
         );
-        if(category.length() === 0)
+        if(category.length === 0)
         return res.status(404).json({message:"category not found"});
 
         const [result] = await db.execute(
-            "INSERT INTO tasks (user_id, title, description, status,categoryId) VALUES (?,?,?,?,?)",
+            "INSERT INTO tasks (user_id, title, description, status,category_id) VALUES (?,?,?,?,?)",
             [user_id, title, description, status || "TODO", categoryId]
         );
         return res.status(201).json({ message:"Task created successfully", task_id: result.insertId});
@@ -40,6 +40,55 @@ const createTaskInsideCatefory =async(req, res) => {
     }
 };
 
+// get all categories
+const getAllcategories = async(req,res) => {
+    try{
+        const user_id = req.user.id;
+        const [categories] = await db.execute(
+            "SELECT * FROM categories WHERE user_id = ?",[user_id]
+        );
+
+        if(categories.length === 0){
+            return res.status(404).json({message:"Categories not found"})
+        }
+        return res.status(200).json({ categories });
+    }
+    catch(err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+//delete category 
+const deleteCategory = async (req,res) => {
+    try{
+        const user_id = req.user.id;
+        const {categoryId} = req.params;
+        await db.execute(
+            "DELETE FROM tasks WHERE category_id = ? AND user_id = ?",
+            [categoryId, user_id]
+        );
+        const [category] = await db.execute(
+            "SELECT * FROM categories WHERE id = ? AND user_id = ?",
+            [categoryId, user_id]
+        );
+
+        if (category.length === 0) {
+            return res.status(404).json({ message: "Category not found" });
+        }
+
+        await db.execute(
+            "DELETE FROM categories WHERE id = ? AND user_id = ?",
+            [categoryId, user_id]
+        );
+
+        return res.status(200).json({ message: "Category deleted successfully" });
+
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
 
 // Create a new task
 const createTask = async (req, res) => {
@@ -177,7 +226,7 @@ const deleteTask = async (req, res) => {
     }
 };
 
-module.exports = { createCategory, createTask, getAllTasks, getTaskById, updateTask, deleteTask };
+module.exports = { createCategory,createTaskInsideCategory,getAllcategories,deleteCategory, createTask, getAllTasks, getTaskById, updateTask, deleteTask };
 
 // get tasks according to dates
 // const getTask = async (req,res) => {

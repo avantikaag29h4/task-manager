@@ -1,10 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth.middleware");
-const { createCategory,createTask, getAllTasks, getTaskById, updateTask, deleteTask, getTask } = require("../controllers/task.controller");
+const { createCategory, createTaskInsideCategory,getAllcategories,deleteCategory, createTask, getAllTasks, getTaskById, updateTask, deleteTask, getTask } = require("../controllers/task.controller");
 
 // All routes protected by JWT
 router.post("/categories", auth, createCategory);
+router.get("/categories",auth,getAllcategories);
+router.post("/categories/:categoryId/tasks",auth,createTaskInsideCategory);
+router.delete("/categories/:categoryId",auth,deleteCategory);
+// router.get("/categories",auth,getAllcategories);
 router.post("/", auth, createTask);
 router.get("/", auth, getAllTasks);
 // router.get("/filtered_tasks", auth, getTask);

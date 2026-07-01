@@ -5,8 +5,9 @@ const jwt = require("jsonwebtoken");
 
 const signup = async (req, res) => {
     try {
-        console.log("I am avantika");
-        const { name, age, phone, email, username, password, confirm_password } = req.body;
+        const { name, email, username, password, confirm_password } = req.body;
+        const age = req.body.age || null;
+        const phone = req.body.phone || null;
 
         // 1. Validate fields
         if (!name || !email || !username || !password || !confirm_password) {
@@ -44,7 +45,7 @@ const signup = async (req, res) => {
     }
 };
 
-module.exports = { signup };
+// module.exports = { signup };
 
 
 
@@ -88,4 +89,36 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = { signup, login };
+const deleteUser = async (req,res) => {
+    try{
+        const user_id = req.user.id;
+        const [user] = await db.execute(
+            "SELECT * FROM users WHERE id = ? ",[user_id]
+        );
+
+        if(user.length === 0){
+            return res.status(400).json({message: "User not found"});
+        }
+        await db.execute(
+            "DELETE FROM tasks WHERE user_id = ?",
+            [user_id]
+        );
+
+        await db.execute(
+            "DELETE FROM categories WHERE user_id = ?",
+            [user_id]
+        );
+        await db.execute(
+            "DELETE FROM users WHERE id = ?",
+            [user_id]
+        );
+        return res.status(200).json({message:"User deleted permanently"});
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+module.exports = { signup, login,deleteUser };
